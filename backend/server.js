@@ -7,7 +7,9 @@ const crypto = require('crypto');
 
 const algorithm = 'aes-256-cbc';
 const secretKey = process.env.SECRET_KEY;
-
+if (!secretKey || secretKey.length !== 32) {
+  throw new Error("SECRET_KEY must be exactly 32 characters long");
+}
 // Encrypt function
 function encrypt(text) {
   const iv = crypto.randomBytes(16);
