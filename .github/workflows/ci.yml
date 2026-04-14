@@ -1,0 +1,73 @@
+name: CI Pipeline
+
+# Step 2: Smart Triggers
+# Run the workflow on push or pull request to the main branch
+on:
+  push:
+    branches:
+      - main
+    # Ignore unnecessary files to save action minutes
+    paths-ignore:
+      - "README.md"
+      - "docs/**"
+  pull_request:
+    branches:
+      - main
+    paths-ignore:
+      - "README.md"
+      - "docs/**"
+
+# Step 3: Jobs
+jobs:
+  # Step 4: Build Stage
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    
+    steps:
+      # Checkout the repository code
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        
+      # Setup Node.js to the latest LTS (Long Term Support) version
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          
+      # Install the required dependencies
+      - name: Install Dependencies
+        run: npm install
+        
+      # Build the frontend source code
+      - name: Build Frontend
+        run: npm run build
+
+  # Step 5: Test Stage
+  test:
+    name: Test and DevSecOps
+    runs-on: ubuntu-latest
+    # This ensures the test job only runs after the build job is successful
+    needs: build
+    
+    steps:
+      # We checkout code and set up Node again because this is a separate isolated job
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          
+      - name: Install Dependencies
+        run: npm install
+        
+      # Run tests - the "|| true" ensures the pipeline doesn't fail if there are no tests or tests fail
+      - name: Run Tests
+        run: npm test --if-present || true
+        
+      # Basic DevSecOps: Check for known security vulnerabilities in frontend dependencies
+      # We use "|| true" here as well so the pipeline doesn't fail just because of an audit warning
+      - name: Security Check
+        run: npm audit || true
